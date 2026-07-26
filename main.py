@@ -7,6 +7,8 @@ import datetime
 import calendar
 import asyncio
 import re
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # ==========================================
 # 1. CONFIGURATION & TOKENS
@@ -258,7 +260,24 @@ async def bday_list(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 
 # ==========================================
-# 6. OWNER COMMANDS
+# 6. WEB SERVER
+# ==========================================
+
+class SimpleHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"BirthdayGoat is alive!")
+
+def run_web_server():
+    # Render provides a port via environment variables, default to 10000 if not found
+    port = int(os.getenv("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), SimpleHandler)
+    server.serve_forever()
+    
+
+# ==========================================
+# 7. OWNER COMMANDS
 # ==========================================
 set_group = app_commands.Group(name="set", description="Server configuration commands", default_permissions=discord.Permissions(administrator=True))
 
@@ -341,4 +360,11 @@ bot.tree.add_command(birthday_group)
 bot.tree.add_command(set_group)
 
 # Run the bot
-bot.run(DISCORD_TOKEN)
+if __name__ == "__main__":
+    # Start the fake web server in a separate thread so Render is happy
+    web_thread = threading.Thread(target=run_web_server, daemon=True)
+    web_thread.start()
+
+    # Run your Discord bot normally
+    bot.run(DISCORD_TOKEN)
+    
