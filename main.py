@@ -41,15 +41,13 @@ class BirthdayGoat(commands.Bot):
         super().__init__(command_prefix="!", intents=intents)
         self.db: libsql_client.Client = None
 
+
     async def setup_hook(self):
         # Initialize Turso Database Connection
         self.db = libsql_client.create_client(url=TURSO_URL, auth_token=TURSO_TOKEN)
         
         # Load Cogs / Extensions
         await self.load_extension("status")
-        
-        # Create Tables if they don't exist
-        await self.db.execute(""" ... """)
         
         # Create Tables if they don't exist
         await self.db.execute("""
@@ -82,7 +80,8 @@ class BirthdayGoat(commands.Bot):
         # Start the background task
         self.check_birthdays.start()
         print("BirthdayGoat is online and commands are synced!")
-
+        
+    
     async def close(self):
         if self.db:
             await self.db.close()
