@@ -45,6 +45,12 @@ class BirthdayGoat(commands.Bot):
         # Initialize Turso Database Connection
         self.db = libsql_client.create_client(url=TURSO_URL, auth_token=TURSO_TOKEN)
         
+        # Load Cogs / Extensions
+        await self.load_extension("status")
+        
+        # Create Tables if they don't exist
+        await self.db.execute(""" ... """)
+        
         # Create Tables if they don't exist
         await self.db.execute("""
             CREATE TABLE IF NOT EXISTS guild_settings (
@@ -83,9 +89,9 @@ class BirthdayGoat(commands.Bot):
         await super().close()
 
     # ==========================================
-    # 3. DAILY BIRTHDAY CHECK (GMT 12:00)
+    # 3. DAILY BIRTHDAY CHECK (GMT 00:00)
     # ==========================================
-    @tasks.loop(time=datetime.time(hour=12, minute=0, tzinfo=datetime.timezone.utc))
+    @tasks.loop(time=datetime.time(hour=0, minute=0, tzinfo=datetime.timezone.utc))
     async def check_birthdays(self):
         today = datetime.datetime.now(datetime.timezone.utc)
         is_leap = calendar.isleap(today.year)
