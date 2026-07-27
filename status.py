@@ -16,7 +16,7 @@ class StatusCog(commands.Cog):
     def cog_unload(self):
         self.update_status_channels.cancel()
 
-    @tasks.loop(minutes=10)  # Safe interval matching Discord's 2 edits / 10 mins rate limit
+    @tasks.loop(minutes=30)  # Safe interval matching Discord's 2 edits / 10 mins rate limit
     async def update_status_channels(self):
         await self.bot.wait_until_ready()
 
