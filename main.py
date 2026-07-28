@@ -90,7 +90,7 @@ class BirthdayGoat(commands.Bot):
     # ==========================================
     # 3. DAILY BIRTHDAY CHECK (GMT 00:00)
     # ==========================================
-    @tasks.loop(time=datetime.time(hour=1, minute=36, tzinfo=datetime.timezone.utc))
+    @tasks.loop(time=datetime.time(hour=0, minute=00, tzinfo=datetime.timezone.utc))
     async def check_birthdays(self):
         today = datetime.datetime.now(datetime.timezone.utc)
         is_leap = calendar.isleap(today.year)
