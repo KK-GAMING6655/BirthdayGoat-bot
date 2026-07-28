@@ -16,13 +16,21 @@ class StatusCog(commands.Cog):
     def cog_unload(self):
         self.update_status_channels.cancel()
 
-    @tasks.loop(minutes=30)  # Safe interval matching Discord's 2 edits / 10 mins rate limit
+    @tasks.loop(minutes=30)
     async def update_status_channels(self):
         await self.bot.wait_until_ready()
 
-        # Calculate live stats
+        # Calculate live servers
         total_servers = len(self.bot.guilds)
-        total_users = sum(guild.member_count or 0 for guild in self.bot.guilds)
+        
+        # --- NEW: Fetch registered birthdays from Turso ---
+        try:
+            result = await self.bot.db.execute("SELECT COUNT(*) FROM user_birthdays")
+            total_users = result.rows[0][0] if result.rows else 0
+        except Exception as e:
+            print(f"[Status Cog] Failed to fetch users: {e}")
+            total_users = 0
+            
 
         # 1. Update Server Count Channel
         if self.server_channel_id:
