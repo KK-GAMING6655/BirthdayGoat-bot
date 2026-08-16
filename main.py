@@ -370,6 +370,29 @@ bot.tree.add_command(set_group)
 
 
 
+
+@app_commands.command(name="id", description="Displays all slash command IDs for this bot.")
+@app_commands.default_permissions(administrator=True) # Admin only
+async def get_command_ids(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=True)
+
+    try:
+        # Fetch global registered commands from Discord API
+        commands = await interaction.client.tree.fetch_commands()
+
+        if not commands:
+            await interaction.followup.send("No synced commands found.")
+            return
+
+        # Format command names and their IDs
+        command_list = [f"**/{cmd.name}**: `{cmd.id}`" for cmd in commands]
+        message = "**Bot Slash Command IDs:**\n" + "\n".join(command_list)
+
+        await interaction.followup.send(message)
+
+    except Exception as e:
+        await interaction.followup.send(f"Failed to fetch command IDs: {e}")
+        
 # ==========================================
 # 8. RUN BOT & WEB SERVER
 # ==========================================
