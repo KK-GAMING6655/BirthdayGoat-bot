@@ -366,6 +366,27 @@ async def bday_test(interaction: discord.Interaction):
 bot.tree.add_command(birthday_group)
 bot.tree.add_command(set_group)
 
+
+
+@bot.tree.command(name="commandids", description="Shows all slash command IDs of this bot")
+async def commandids(interaction: discord.Interaction):
+    try:
+        commands = await bot.tree.fetch_commands()
+        
+        if not commands:
+            await interaction.response.send_message("No slash commands found.", ephemeral=True)
+            return
+
+        reply = "**Your Bot Slash Command IDs:**\n\n"
+        for cmd in commands:
+            reply += f"`/{cmd.name}` → `{cmd.id}`\n"
+
+        await interaction.response.send_message(reply, ephemeral=True)
+    except Exception as e:
+        print(e)
+        await interaction.response.send_message("Failed to fetch command IDs.", ephemeral=True)
+
+
 # ==========================================
 # 8. RUN BOT & WEB SERVER
 # ==========================================
