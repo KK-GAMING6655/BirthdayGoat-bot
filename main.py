@@ -341,6 +341,28 @@ async def set_message(interaction: discord.Interaction, heading: str = None, des
     embed = discord.Embed(title=f"Success {STICKER_5}", description="Successfully updated the custom birthday message.", color=DEFAULT_COLOR)
     await interaction.response.send_message(embed=embed)
 
+
+@birthday_group.command(name="commandids", description="Shows all slash command IDs of this bot")
+async def commandids(interaction: discord.Interaction):
+    try:
+        commands = await bot.tree.fetch_commands()
+        
+        if not commands:
+            await interaction.response.send_message("No slash commands found.", ephemeral=True)
+            return
+
+        reply = "**Your Bot Slash Command IDs:**\n\n"
+        for cmd in commands:
+            reply += f"`/{cmd.name}` → `{cmd.id}`\n"
+
+        await interaction.response.send_message(reply, ephemeral=True)
+    except Exception as e:
+        print(e)
+        await interaction.response.send_message("Failed to fetch command IDs.", ephemeral=True)
+
+
+
+
 @birthday_group.command(name="test", description="Test the birthday message (Owner only)")
 @app_commands.checks.has_permissions(administrator=True)
 async def bday_test(interaction: discord.Interaction):
@@ -366,25 +388,6 @@ async def bday_test(interaction: discord.Interaction):
 bot.tree.add_command(birthday_group)
 bot.tree.add_command(set_group)
 
-
-
-@bot.tree.command(name="commandids", description="Shows all slash command IDs of this bot")
-async def commandids(interaction: discord.Interaction):
-    try:
-        commands = await bot.tree.fetch_commands()
-        
-        if not commands:
-            await interaction.response.send_message("No slash commands found.", ephemeral=True)
-            return
-
-        reply = "**Your Bot Slash Command IDs:**\n\n"
-        for cmd in commands:
-            reply += f"`/{cmd.name}` → `{cmd.id}`\n"
-
-        await interaction.response.send_message(reply, ephemeral=True)
-    except Exception as e:
-        print(e)
-        await interaction.response.send_message("Failed to fetch command IDs.", ephemeral=True)
 
 
 # ==========================================
