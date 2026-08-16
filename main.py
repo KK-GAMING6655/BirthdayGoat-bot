@@ -318,7 +318,7 @@ async def set_ping(interaction: discord.Interaction, role: discord.Role):
     embed = discord.Embed(title=f"Success {STICKER_5}", description=f"Birthday ping set to {role.mention}", color=DEFAULT_COLOR)
     await interaction.response.send_message(embed=embed)
 
-@set_message_cmd := set_group.command(name="message", description="Customize the server's birthday message")
+@set_group.command(name="message", description="Customize the server's birthday message")
 async def set_message(interaction: discord.Interaction, heading: str = None, description: str = None, image_url: str = None, thumbnail_url: str = None, footer: str = None, colour: str = None):
     if colour:
         if not colour.startswith("#"): colour = f"#{colour}"
