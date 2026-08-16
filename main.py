@@ -290,12 +290,10 @@ def run_web_server():
     server.serve_forever()
     
 # ==========================================
-# 7. OWNER COMMANDS
+# 7. OWNER COMMANDS & COMMAND GROUPS
 # ==========================================
 
-
-
-
+# 1. Define set_group FIRST
 set_group = app_commands.Group(name="set", description="Server configuration commands", default_permissions=discord.Permissions(administrator=True))
 
 @set_group.command(name="channel", description="Set the channel where birthday wishes will be sent")
@@ -320,7 +318,7 @@ async def set_ping(interaction: discord.Interaction, role: discord.Role):
     embed = discord.Embed(title=f"Success {STICKER_5}", description=f"Birthday ping set to {role.mention}", color=DEFAULT_COLOR)
     await interaction.response.send_message(embed=embed)
 
-@set_group.command(name="message", description="Customize the server's birthday message")
+@set_message_cmd := set_group.command(name="message", description="Customize the server's birthday message")
 async def set_message(interaction: discord.Interaction, heading: str = None, description: str = None, image_url: str = None, thumbnail_url: str = None, footer: str = None, colour: str = None):
     if colour:
         if not colour.startswith("#"): colour = f"#{colour}"
@@ -345,8 +343,6 @@ async def set_message(interaction: discord.Interaction, heading: str = None, des
     embed = discord.Embed(title=f"Success {STICKER_5}", description="Successfully updated the custom birthday message.", color=DEFAULT_COLOR)
     await interaction.response.send_message(embed=embed)
 
-
-
 @birthday_group.command(name="test", description="Test the birthday message (Owner only)")
 @app_commands.checks.has_permissions(administrator=True)
 async def bday_test(interaction: discord.Interaction):
@@ -368,6 +364,7 @@ async def bday_test(interaction: discord.Interaction):
     embed = build_birthday_embed(interaction.user, settings)
     await channel.send(content=ping_text, embed=embed)
 
+# 2. Temporary ID command
 @bot.tree.command(name="id", description="Displays all slash command IDs for this bot.")
 @app_commands.default_permissions(administrator=True)
 async def get_command_ids(interaction: discord.Interaction):
@@ -388,12 +385,10 @@ async def get_command_ids(interaction: discord.Interaction):
     except Exception as e:
         await interaction.followup.send(f"Failed to fetch command IDs: {e}")
 
-
-
-# Register command trees
+# 3. Register command trees at the VERY END
 bot.tree.add_command(birthday_group)
 bot.tree.add_command(set_group)
-
+    
 
 
 # ==========================================
