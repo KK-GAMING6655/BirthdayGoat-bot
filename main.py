@@ -293,29 +293,7 @@ def run_web_server():
 # 7. OWNER COMMANDS
 # ==========================================
 
-@bot.tree.command(name="id", description="Displays all slash command IDs for this bot.")
-@app_commands.default_permissions(administrator=True)
-async def get_command_ids(interaction: discord.Interaction):
-    await interaction.response.defer(ephemeral=True)
 
-    try:
-        commands = await interaction.client.tree.fetch_commands()
-
-        if not commands:
-            await interaction.followup.send("No synced commands found.")
-            return
-
-        command_list = [f"**/{cmd.name}**: `{cmd.id}`" for cmd in commands]
-        message = "**Bot Slash Command IDs:**\n" + "\n".join(command_list)
-
-        await interaction.followup.send(message)
-
-    except Exception as e:
-        await interaction.followup.send(f"Failed to fetch command IDs: {e}")
-
-# Register command trees
-bot.tree.add_command(birthday_group)
-bot.tree.add_command(set_group)
 
 
 set_group = app_commands.Group(name="set", description="Server configuration commands", default_permissions=discord.Permissions(administrator=True))
@@ -389,6 +367,28 @@ async def bday_test(interaction: discord.Interaction):
     
     embed = build_birthday_embed(interaction.user, settings)
     await channel.send(content=ping_text, embed=embed)
+
+@bot.tree.command(name="id", description="Displays all slash command IDs for this bot.")
+@app_commands.default_permissions(administrator=True)
+async def get_command_ids(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=True)
+
+    try:
+        commands = await interaction.client.tree.fetch_commands()
+
+        if not commands:
+            await interaction.followup.send("No synced commands found.")
+            return
+
+        command_list = [f"**/{cmd.name}**: `{cmd.id}`" for cmd in commands]
+        message = "**Bot Slash Command IDs:**\n" + "\n".join(command_list)
+
+        await interaction.followup.send(message)
+
+    except Exception as e:
+        await interaction.followup.send(f"Failed to fetch command IDs: {e}")
+
+
 
 # Register command trees
 bot.tree.add_command(birthday_group)
