@@ -365,6 +365,129 @@ async def bday_test(interaction: discord.Interaction):
     await channel.send(content=ping_text, embed=embed)
 
 
+# ==========================================
+# 9. OWNER COMMAND: FINAL SHUTDOWN BROADCAST
+# ==========================================
+END_GIF_URL = "https://cdn.discordapp.com/attachments/1480843834924601429/1484738676352225320/100.webp?ex=6a885ee5&is=6a870d65&hm=76938896b6e60b83bdfee3b8325193e419918893b9cd040c9c0ad788f5018a0b&"
+END_INVITE_URL = "https://discord.gg/jwUnSWKsfq"
+
+def build_end_embed() -> discord.Embed:
+    embed = discord.Embed(
+        title="A last message from the creator of BirthdayGoat.",
+        description=(
+            "This bot is going to be offline soon. I am discontinuing this project. "
+            "Thank you for adding the bot in your server. We are very glad that you supported "
+            "this startup. This is the end for BirthdayGoat. We are also very sad. "
+            "If you want to remind Birthdays in your server, you can add any other birthday bot. "
+            "Don't worry about your data. It will all be deleted after this message.\n\n"
+            "BirthdayGoat's official server will be also deleted. So if you want to contact "
+            f"the creator, join this server\n{END_INVITE_URL}"
+        ),
+        color=DEFAULT_COLOR
+    )
+    embed.set_image(url=END_GIF_URL)
+    embed.set_footer(text="Thank you everyone for the support. We will never forget you <3")
+    return embed
+
+
+class ConfirmEndView(discord.ui.View):
+    """Requires the owner to explicitly confirm before this destructive command runs."""
+    def __init__(self, author_id: int):
+        super().__init__(timeout=60)
+        self.author_id = author_id
+        self.confirmed = None
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("This confirmation isn't for you.", ephemeral=True)
+            return False
+        return True
+
+    @discord.ui.button(label="Yes, send the final message", style=discord.ButtonStyle.danger)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.confirmed = True
+        for item in self.children:
+            item.disabled = True
+        await interaction.response.edit_message(content="Confirmed. Starting broadcast...", view=self)
+        self.stop()
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.confirmed = False
+        for item in self.children:
+            item.disabled = True
+        await interaction.response.edit_message(content="Cancelled. No messages were sent.", view=self)
+        self.stop()
+
+
+@bot.tree.command(name="end", description="[Owner Only] Send the final shutdown message to every server, then wipe stored data.")
+async def end_command(interaction: discord.Interaction):
+    # Restrict to the bot owner (application owner / team member)
+    if not await bot.is_owner(interaction.user):
+        embed = discord.Embed(title=f"Failed {STICKER_4}", description="Only the bot owner can use this command.", color=discord.Color.red())
+        return await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    warning = (
+        f"⚠️ **This will send the shutdown message to the birthday channel of every server "
+        f"the bot is in ({len(bot.guilds)} servers), then permanently delete all stored data.**\n"
+        f"This cannot be undone. Are you sure?"
+    )
+    view = ConfirmEndView(interaction.user.id)
+    await interaction.response.send_message(warning, view=view, ephemeral=True)
+    timed_out = await view.wait()
+
+    if timed_out or not view.confirmed:
+        return  # Owner cancelled, or didn't respond in time
+
+    sent, skipped, failed = 0, 0, 0
+    end_embed = build_end_embed()
+
+    for guild in list(bot.guilds):
+        try:
+            settings_req = await bot.db.execute(
+                "SELECT channel_id, ping_role_id FROM guild_settings WHERE server_id = ?",
+                (str(guild.id),)
+            )
+            if not settings_req.rows or not settings_req.rows[0][0]:
+                skipped += 1
+                continue
+
+            channel_id, ping_role_id = settings_req.rows[0]
+            channel = guild.get_channel(int(channel_id))
+            if not channel:
+                skipped += 1
+                continue
+
+            ping_text = f"<@&{ping_role_id}>" if ping_role_id else ""
+            await channel.send(content=ping_text, embed=end_embed)
+            sent += 1
+        except discord.Forbidden:
+            failed += 1
+        except Exception as e:
+            print(f"[/end] Failed to message guild {guild.id}: {e}")
+            failed += 1
+
+        await asyncio.sleep(1)  # courtesy delay to stay well under rate limits
+
+    # Wipe stored data, as promised in the message itself
+    db_wiped = True
+    try:
+        await bot.db.execute("DELETE FROM user_birthdays")
+        await bot.db.execute("DELETE FROM guild_settings")
+    except Exception as e:
+        print(f"[/end] Failed to wipe database: {e}")
+        db_wiped = False
+
+    summary = (
+        f"**Broadcast complete.**\n"
+        f"✅ Sent: {sent}\n"
+        f"⏭️ Skipped (no channel configured): {skipped}\n"
+        f"❌ Failed (permissions/errors): {failed}\n"
+        f"🗑️ Database wiped: {'Yes' if db_wiped else 'No — check logs'}"
+    )
+    await interaction.followup.send(summary, ephemeral=True)
+
+
 # 3. Register command trees at the VERY END
 bot.tree.add_command(birthday_group)
 bot.tree.add_command(set_group)
